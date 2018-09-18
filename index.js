@@ -1,13 +1,14 @@
 'use strict';
 
 var util = require('util');
-var winston = require('winston');
 var Transport = require('winston-transport');
 var io = require('socket.io-client');
 var timestamp = require('monotonic-timestamp');
 var debug = require('debug')('winston-node-monitor-ui');
 
-var NodeMonitorUi = winston.transports.NodeMonitorUI = function ({level = 'info', port = 3001, host = 'localhost'} = {}) {
+function NodeMonitorUi({level = 'info', port = 3001, host = 'localhost'} = {}) {
+  Transport.call(this);
+
   //
   // Name this logger
   //
