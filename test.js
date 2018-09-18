@@ -2,14 +2,14 @@
 
 var winston = require('winston');
 var expect = require('chai').expect;
-require('./');
+var NodeMonitorUi = require('./');
 
 describe('winston-node-monitor-ui', () => {
   var logger;
   var io;
 
   before(() => {
-    logger = new winston.Logger();
+    logger = winston.createLogger();
     io = require('socket.io')(3001);
   });
 
@@ -23,18 +23,24 @@ describe('winston-node-monitor-ui', () => {
       {
         level: 'info',
         meta: {
-          foo: 'quu'
+          foo: 'quu',
+          level: 'info',
+          message: 'foo'
         },
         msg: 'foo'
       },
       {
         level: 'info',
         meta: {
-          baz: 'qxx'
+          baz: 'qxx',
+          level: 'info',
+          message: 'bar'
         },
         msg: 'bar'
       }
     ];
+
+    const transport = new NodeMonitorUi();
 
     io.on('connection', (socket) => {
       socket.on('logs', (log) => actual.push({level: log.level, meta: log.meta, msg: log.msg}));
@@ -44,14 +50,14 @@ describe('winston-node-monitor-ui', () => {
       });
     });
 
-    logger.add(winston.transports.NodeMonitorUI);
+    logger.add(transport);
 
     logger.info('foo', {foo: 'quu'});
     logger.debug('skip');
 
     setTimeout(() => {
       logger.info('bar', {baz: 'qxx'});
-      logger.remove(logger.transports.NodeMonitorUI);
+      logger.remove(transport);
     }, 500);
   });
 });

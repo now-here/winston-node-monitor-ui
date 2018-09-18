@@ -1,12 +1,13 @@
 'use strict';
 
-var util = require('util'),
-  winston = require('winston'),
-  io = require('socket.io-client'),
-  timestamp = require('monotonic-timestamp'),
-  debug = require('debug')('winston-node-monitor-ui');
+var util = require('util');
+var winston = require('winston');
+var Transport = require('winston-transport');
+var io = require('socket.io-client');
+var timestamp = require('monotonic-timestamp');
+var debug = require('debug')('winston-node-monitor-ui');
 
-var Logger = winston.transports.NodeMonitorUI = function ({level = 'info', port = 3001, host = 'localhost'} = {}) {
+var NodeMonitorUi = winston.transports.NodeMonitorUI = function ({level = 'info', port = 3001, host = 'localhost'} = {}) {
   //
   // Name this logger
   //
@@ -45,9 +46,9 @@ var Logger = winston.transports.NodeMonitorUI = function ({level = 'info', port 
 // Inherit from `winston.Transport` so you can take advantage
 // of the base functionality and `.handleExceptions()`.
 //
-util.inherits(Logger, winston.Transport);
+util.inherits(NodeMonitorUi, Transport);
 
-Logger.prototype.log = function (level, msg, meta, callback) {
+NodeMonitorUi.prototype.log = function (level, msg, meta, callback) {
   debug('log, state: %s, level: %s, msg: %s, meta: %j', this._state, level, msg, meta);
 
   if (this._state === 'connected') this.socket.emit('logs', this.formatLog(level, msg, meta));
@@ -58,13 +59,13 @@ Logger.prototype.log = function (level, msg, meta, callback) {
   callback(null, true);
 };
 
-Logger.prototype.close = function () {
+NodeMonitorUi.prototype.close = function () {
   debug('close');
   if (this.socket) this.socket.disconnect();
   delete this.socket;
 };
 
-Logger.prototype._connect = function () {
+NodeMonitorUi.prototype._connect = function () {
   debug('_connect');
 
   this._state = 'INITIALIZING';
@@ -93,14 +94,14 @@ Logger.prototype._connect = function () {
   });
 };
 
-Logger.prototype._enqueue = function (data) {
+NodeMonitorUi.prototype._enqueue = function (data) {
   debug('enqueue, data: %j, queue length: %s', data, this._queue.length);
   this._queue.push(data);
   if (this._queue.length > this._MAX_QUEUE_LENGTH) this._queue.shift();
 
 };
 
-Logger.prototype._flushQueue = function () {
+NodeMonitorUi.prototype._flushQueue = function () {
   debug('flush queue, state: %s, queue length: %s', this._state, this._queue.length);
   if (this._state === 'connected' && this._queue.length > 0) {
     while (this._queue.length > 0) {
@@ -108,3 +109,5 @@ Logger.prototype._flushQueue = function () {
     }
   }
 };
+
+module.exports = NodeMonitorUi;
